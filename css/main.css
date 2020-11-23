@@ -1,0 +1,58 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.container {
+  display: flex;
+  justify-content: space-between;
+  width: 500px;
+  margin: 20px auto;
+  box-shadow: 0 0 8px 2px #bbb;
+}
+
+ul {
+  padding: 10px 15px;
+  list-style: none;
+}
+
+li {
+  margin: 0;
+  padding: 0;
+}
+
+li:not(:last-child) {
+  margin-bottom: 10px;
+}
+
+.button {
+  width: 200px;
+}
+
+
+.indicator {
+  position: relative;
+  padding-right: 15px;
+}
+
+.indicator::after {
+  position: absolute;
+  content: '';
+  width: 10px;
+  height: 10px;
+  right: 0;
+  top: calc(50% - 5px);
+  background: red;
+  border-radius: 50%;
+}
+
+.indicator--active::after {
+  background: green;
+}
+
+.counters span {
+  display: inline-block;
+  min-width: 40px;
+  text-align: right;
+}
