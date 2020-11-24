@@ -1,89 +1,175 @@
-const MIN_SEC = 1,
-      MAX_SEC = 10,
-      MIN_NUM = 1,
-      MAX_NUM = 100,
-      LIMIT_1 = 30,
-      LIMIT_2 = 70;
+// обявляем константы с условия ТЗ
+const CONSTS = {
+  MIN_TIMEOUT: 1, // в секундах
+  MAX_TIMEOUT: 10, // в секундах
+  MIN_NUM: 1, // минимальное значение data
+  MAX_NUM: 100, // максимальное значение data
+  DEFAULT_TIMEOUT: 2, // в секундах
+  LIMIT_1: 30, // первая граница счётчика
+  LIMIT_2: 70, // вторая граница счётчика
+};
 
-const mainQueue = [], // очередь объектов
-      buttonGenerator = document.querySelector('.button--1'), // кнопка запуска и остановки генератора
-      buttonGeter = document.querySelector('.button--2'), // кнопка запуска и остановки получателя
-      resetCounter = document.querySelector('.button--3'), // кнопка очистки счётчиков
-      counters = document.querySelectorAll('.counter span'), // коллекция счётчиков
-      indicatos = document.querySelectorAll('.indicator'); // коллекция индикаторов
-let timerIdGenerator,
-    timerIdGeter,
-    toggleGenerator = false, // индикатор работы генератора
-    toggleGeter = false; // индикатор работы получателя
+// главный объект
+const main = {
+  mainQueue: [], // очередь
+  counter: [ // счётчики и Node узлы для отображения
+    {
+      count: 0,
+      counterNode: document.querySelector('.counter--1 span'),
+    },
+    {
+      count: 0,
+      counterNode: document.querySelector('.counter--2 span'),
+    },
+    {
+      count: 0,
+      counterNode: document.querySelector('.counter--3 span'),
+    },
+  ],
+  button: document.querySelector('.button--3'), // кнопка сброса счётчика
+  // функция сброса счётчика
+  resetCounter: function() { 
+    this.counter.forEach(elem => { //прохлдимся по масиву счётчика
+      elem.count = 0; //сбрасываем значение
+      elem.counterNode.textContent = elem.count; // отображаем значение на странице
+    });
+  }
+};
 
-
-
-// служебная функция
+// служебная функция получение рандомных чисел в диапазоне
 function randomInteger(min, max) {
   let rand = min + Math.random() * (max + 1 - min); // случайное число от min до (max+1)
   return Math.floor(rand);
 }
 
-
-// класс для объектов
+// класс для создания объектов
 class GenerateObject {
   constructor(min, max) {
     this.data = randomInteger(min, max);
   }
 }
 
-// функция генератор
-function generator() {
-  const newObject = new GenerateObject(MIN_NUM, MAX_NUM);
-  const newTimeout = randomInteger(MIN_SEC, MAX_SEC) * 100;
-  mainQueue.push(newObject);
-  indicatos[2].classList.add('indicator--active');
-  timerIdGenerator = setTimeout(generator, newTimeout);
-}
-
-buttonGenerator.addEventListener('click', () => {
-  if (toggleGenerator) {
-    toggleGenerator = !toggleGenerator;
-    clearTimeout(timerIdGenerator);
-    indicatos[0].classList.remove('indicator--active');
-  } else {
-    toggleGenerator = !toggleGenerator;
-    generator();
-    indicatos[0].classList.add('indicator--active');
+// класс генератор
+class CreateGenerator {
+  constructor(indicatorSelector, indicatorActiveClass, queueIndicatorSelector, buttonSelector, queue , CONSTS) {
+    this.button = document.querySelector(buttonSelector);
+    this.queue = queue,
+    this.queueIndicator = document.querySelector(queueIndicatorSelector),
+    this.newObject = null,
+    this.toggle = false,
+    this.indicator = document.querySelector(indicatorSelector),
+    this.timerId = null,
+    this.timeOut = null,
+    this.indicatorActiveClass = indicatorActiveClass,
+    this.minTimeout = CONSTS.MIN_TIMEOUT,
+    this.maxTimeout = CONSTS.MAX_TIMEOUT,
+    this.minNum = CONSTS.MIN_NUM, 
+    this.maxNum = CONSTS.MAX_NUM;
   }
-});
 
-// функция получадель
-function getter() {
-  if (mainQueue.length > 0) {
-    const newObject = mainQueue.shift();
-    if (newObject.data < LIMIT_1) {
-      counters[0].textContent = +counters[0].textContent + 1;
-    } else if (newObject.data >= LIMIT_2) {
-      counters[2].textContent = +counters[2].textContent + 1;
+  startGenerator() {
+    this.timeOut = randomInteger(this.minTimeout, this.maxTimeout) * 1000;
+    if (this.toggle) {
+      this.newObject = new GenerateObject(this.minNum, this.maxNum);
+      this.queue.push(this.newObject);
+      this.queueIndicator.classList.add(this.indicatorActiveClass);
+      this.timerId = setTimeout(() => this.startGenerator(this), this.timeOut);
     } else {
-      counters[1].textContent = +counters[1].textContent + 1;
+      this.indicator.classList.add(this.indicatorActiveClass);
+      this.toggle = !this.toggle;
+      this.timerId = setTimeout(() => this.startGenerator(this), this.timeOut);
     }
-    timerIdGeter = setTimeout(getter, 200);
-  } else {
-    indicatos[2].classList.remove('indicator--active');
-    timerIdGeter = setTimeout(getter, 200);
+  }
+  stopGenerator() {
+    this.toggle = !this.toggle;
+    clearTimeout(this.timerId);
+    this.indicator.classList.remove(this.indicatorActiveClass);
+  }
+}
+class CreateGetter {
+  constructor(indicatorSelector, indicatorActiveClass, queueIndicatorSelector, buttonSelector, queue, CONSTS) {
+    this.button = document.querySelector(buttonSelector);
+    this.queue = queue,
+    this.queueIndicator = document.querySelector(queueIndicatorSelector),
+    this.newObject = null,
+    this.toggle = false,
+    this.indicator = document.querySelector(indicatorSelector),
+    this.defaulTimeOut = CONSTS.DEFAULT_TIMEOUT,
+    this.timerId = null,
+    this.timeOut = this.defaulTimeOut,
+    this.indicatorActiveClass = indicatorActiveClass,
+    this.limitOne = CONSTS.LIMIT_1,
+    this.limitTwo = CONSTS.LIMIT_2;
+  }
+
+  startGetter() {
+    if (this.toggle) {
+      if (this.queue.length > 0) {
+        this.timeOut = this.defaulTimeOut;
+        this.newObject = this.queue.shift();
+        if (this.newObject.data < this.limitOne) {
+          main.counter[0].count++;
+          main.counter[0].counterNode.textContent = main.counter[0].count;
+        } else if (this.newObject.data >= this.limitTwo) {
+          main.counter[2].count++;
+          main.counter[2].counterNode.textContent = main.counter[2].count;
+        } else {
+          main.counter[1].count++;
+          main.counter[1].counterNode.textContent = main.counter[1].count;
+        }
+      } else {
+        this.queueIndicator.classList.remove(this.indicatorActiveClass);
+        this.timeOut++;
+      }
+      this.timerId = setTimeout(() => this.startGetter(this), this.timeOut * 1000);
+    } else {
+      this.indicator.classList.add(this.indicatorActiveClass);
+      this.toggle = !this.toggle;
+      this.timerId = setTimeout(() => this.startGetter(this), this.timeOut * 1000);
+    }
+  }
+
+  stopGetter() {
+    this.toggle = !this.toggle;
+    clearTimeout(this.timerId);
+    this.indicator.classList.remove(this.indicatorActiveClass);
   }
 }
 
-buttonGeter.addEventListener('click', () => {
-  if (toggleGeter) {
-    indicatos[1].classList.remove('indicator--active');
-    clearTimeout(timerIdGeter);
-    toggleGeter = !toggleGeter;
+const generator = new CreateGenerator(
+  '.indicator--1', 
+  'indicator--active',
+  '.indicator--3',
+  '.button--1',
+  main.mainQueue,  
+  CONSTS
+);
+
+const getter = new CreateGetter(
+  '.indicator--2', 
+  'indicator--active',
+  '.indicator--3',
+  '.button--2',
+  main.mainQueue,
+  CONSTS
+);
+
+generator.button.addEventListener('click', () => {
+  if (generator.toggle) {
+    generator.stopGenerator();
   } else {
-    indicatos[1].classList.add('indicator--active');
-    getter();
-    toggleGeter = !toggleGeter;
+    generator.startGenerator();
   }
 });
 
+getter.button.addEventListener('click', () => {
+  if (getter.toggle) {
+    getter.stopGetter();
+  } else {
+    getter.startGetter();
+  }
+});
 
-resetCounter.addEventListener('click', () => {
-  counters.forEach(counter => counter.textContent = 0);
+main.button.addEventListener('click', () => {
+  main.resetCounter();
 });
