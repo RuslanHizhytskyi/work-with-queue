@@ -52,15 +52,16 @@ class GenerateObject {
 // класс генератор
 class CreateGenerator {
   constructor(indicatorSelector, indicatorActiveClass, queueIndicatorSelector, buttonSelector, queue , CONSTS) {
-    this.button = document.querySelector(buttonSelector);
-    this.queue = queue,
+    // получаем необходимые параметры
+    this.button = document.querySelector(buttonSelector); // кнопка запуска/остановки генератора
+    this.queue = queue, // ссылка на главную очередь
     this.queueIndicator = document.querySelector(queueIndicatorSelector),
-    this.newObject = null,
-    this.toggle = false,
-    this.indicator = document.querySelector(indicatorSelector),
+    this.newObject = null, // переменная для создания объектов
+    this.toggle = false, // флаг активност
+    this.indicator = document.querySelector(indicatorSelector), // индикатор генератора
     this.timerId = null,
     this.timeOut = null,
-    this.indicatorActiveClass = indicatorActiveClass,
+    this.indicatorActiveClass = indicatorActiveClass, // класс активности индикатора
     this.minTimeout = CONSTS.MIN_TIMEOUT,
     this.maxTimeout = CONSTS.MAX_TIMEOUT,
     this.minNum = CONSTS.MIN_NUM, 
@@ -68,74 +69,83 @@ class CreateGenerator {
   }
 
   startGenerator() {
-    this.timeOut = randomInteger(this.minTimeout, this.maxTimeout) * 1000;
-    if (this.toggle) {
-      this.newObject = new GenerateObject(this.minNum, this.maxNum);
-      this.queue.push(this.newObject);
-      this.queueIndicator.classList.add(this.indicatorActiveClass);
+    this.timeOut = randomInteger(this.minTimeout, this.maxTimeout) * 1000; // устанавливаем timeout
+    if (this.toggle) { // если метод уже работает
+      this.newObject = new GenerateObject(this.minNum, this.maxNum); // создаём новый объект
+      this.queue.push(this.newObject); // записываем объект в очередь
+      this.queueIndicator.classList.add(this.indicatorActiveClass); // включаем индикатор очереди
       this.timerId = setTimeout(() => this.startGenerator(this), this.timeOut);
-    } else {
+    } else { // запуск метода
       this.indicator.classList.add(this.indicatorActiveClass);
       this.toggle = !this.toggle;
       this.timerId = setTimeout(() => this.startGenerator(this), this.timeOut);
     }
   }
+  // становка генератора
   stopGenerator() {
     this.toggle = !this.toggle;
     clearTimeout(this.timerId);
     this.indicator.classList.remove(this.indicatorActiveClass);
   }
 }
+
+// класс получателя
 class CreateGetter {
   constructor(indicatorSelector, indicatorActiveClass, queueIndicatorSelector, buttonSelector, queue, CONSTS) {
-    this.button = document.querySelector(buttonSelector);
-    this.queue = queue,
+    // получаем необходимые параметры
+    this.button = document.querySelector(buttonSelector); // кнопка запуска/остановки получателя
+    this.queue = queue, // ссылка на главную очередь
     this.queueIndicator = document.querySelector(queueIndicatorSelector),
-    this.newObject = null,
-    this.toggle = false,
-    this.indicator = document.querySelector(indicatorSelector),
+    this.newObject = null, // переменная для получения объектов
+    this.toggle = false, // флаг активност
+    this.indicator = document.querySelector(indicatorSelector), // индикатор получателя
     this.defaulTimeOut = CONSTS.DEFAULT_TIMEOUT,
     this.timerId = null,
     this.timeOut = this.defaulTimeOut,
-    this.indicatorActiveClass = indicatorActiveClass,
-    this.limitOne = CONSTS.LIMIT_1,
-    this.limitTwo = CONSTS.LIMIT_2;
+    this.indicatorActiveClass = indicatorActiveClass, // класс активности индикатора
+    this.limitOne = CONSTS.LIMIT_1, // первая граница
+    this.limitTwo = CONSTS.LIMIT_2; // вторая граница
   }
 
   startGetter() {
-    if (this.toggle) {
-      if (this.queue.length > 0) {
+    if (this.toggle) { // если метод уже работает
+      if (this.queue.length > 0) { // усли очередь не пуста
         this.timeOut = this.defaulTimeOut;
         this.newObject = this.queue.shift();
-        if (this.newObject.data < this.limitOne) {
+        if (this.queue.length > 0) { // проверяем не стала ли очередь пуста
+          this.queueIndicator.classList.remove(this.indicatorActiveClass);
+        }
+        if (this.newObject.data < this.limitOne) { // условие для первого счётчика
           main.counter[0].count++;
           main.counter[0].counterNode.textContent = main.counter[0].count;
-        } else if (this.newObject.data >= this.limitTwo) {
+        } else if (this.newObject.data >= this.limitTwo) { // условие для третьего счётчика
           main.counter[2].count++;
           main.counter[2].counterNode.textContent = main.counter[2].count;
-        } else {
+        } else { // всё что не попало в первый и третий счётчик попадает во второй
           main.counter[1].count++;
           main.counter[1].counterNode.textContent = main.counter[1].count;
         }
-      } else {
+      } else { // если очередь пуста
         this.queueIndicator.classList.remove(this.indicatorActiveClass);
-        this.timeOut++;
+        this.timeOut++; // увеличиваем timeout если очередь пуста
       }
       this.timerId = setTimeout(() => this.startGetter(this), this.timeOut * 1000);
-    } else {
+    } else { // запуск метода
       this.indicator.classList.add(this.indicatorActiveClass);
       this.toggle = !this.toggle;
       this.timerId = setTimeout(() => this.startGetter(this), this.timeOut * 1000);
     }
   }
 
+  // остановка получателя
   stopGetter() {
-    this.toggle = !this.toggle;
-    clearTimeout(this.timerId);
-    this.indicator.classList.remove(this.indicatorActiveClass);
+    this.toggle = !this.toggle; // переключаем флаг активности
+    clearTimeout(this.timerId); // сбрасываем timeout
+    this.indicator.classList.remove(this.indicatorActiveClass); // переключаем класс активности
   }
 }
 
+// создаем генератор
 const generator = new CreateGenerator(
   '.indicator--1', 
   'indicator--active',
@@ -145,6 +155,7 @@ const generator = new CreateGenerator(
   CONSTS
 );
 
+// создаем получатель
 const getter = new CreateGetter(
   '.indicator--2', 
   'indicator--active',
@@ -154,6 +165,8 @@ const getter = new CreateGetter(
   CONSTS
 );
 
+
+// обрабатываем событи клика на кнопки
 generator.button.addEventListener('click', () => {
   if (generator.toggle) {
     generator.stopGenerator();
