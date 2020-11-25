@@ -51,10 +51,9 @@ class GenerateObject {
 
 // класс генератор
 class CreateGenerator {
-  constructor(indicatorSelector, indicatorActiveClass, queueIndicatorSelector, buttonSelector, queue , CONSTS) {
+  constructor(indicatorSelector, indicatorActiveClass, queueIndicatorSelector, buttonSelector, CONSTS) {
     // получаем необходимые параметры
     this.button = document.querySelector(buttonSelector); // кнопка запуска/остановки генератора
-    this.queue = queue, // ссылка на главную очередь
     this.queueIndicator = document.querySelector(queueIndicatorSelector),
     this.newObject = null, // переменная для создания объектов
     this.toggle = false, // флаг активност
@@ -72,7 +71,7 @@ class CreateGenerator {
     this.timeOut = randomInteger(this.minTimeout, this.maxTimeout) * 1000; // устанавливаем timeout
     if (this.toggle) { // если метод уже работает
       this.newObject = new GenerateObject(this.minNum, this.maxNum); // создаём новый объект
-      this.queue.push(this.newObject); // записываем объект в очередь
+      main.mainQueue.push(this.newObject); // записываем объект в очередь
       this.queueIndicator.classList.add(this.indicatorActiveClass); // включаем индикатор очереди
       this.timerId = setTimeout(() => this.startGenerator(this), this.timeOut);
     } else { // запуск метода
@@ -91,10 +90,9 @@ class CreateGenerator {
 
 // класс получателя
 class CreateGetter {
-  constructor(indicatorSelector, indicatorActiveClass, queueIndicatorSelector, buttonSelector, queue, CONSTS) {
+  constructor(indicatorSelector, indicatorActiveClass, queueIndicatorSelector, buttonSelector, CONSTS) {
     // получаем необходимые параметры
     this.button = document.querySelector(buttonSelector); // кнопка запуска/остановки получателя
-    this.queue = queue, // ссылка на главную очередь
     this.queueIndicator = document.querySelector(queueIndicatorSelector),
     this.newObject = null, // переменная для получения объектов
     this.toggle = false, // флаг активност
@@ -106,13 +104,14 @@ class CreateGetter {
     this.limitOne = CONSTS.LIMIT_1, // первая граница
     this.limitTwo = CONSTS.LIMIT_2; // вторая граница
   }
+  
 
   startGetter() {
     if (this.toggle) { // если метод уже работает
-      if (this.queue.length > 0) { // усли очередь не пуста
+      if (main.mainQueue.length > 0) { // усли очередь не пуста
         this.timeOut = this.defaulTimeOut;
-        this.newObject = this.queue.shift();
-        if (this.queue.length > 0) { // проверяем не стала ли очередь пуста
+        this.newObject = main.mainQueue.shift();
+        if (main.mainQueue.length <= 0) { // проверяем не стала ли очередь пуста
           this.queueIndicator.classList.remove(this.indicatorActiveClass);
         }
         if (this.newObject.data < this.limitOne) { // условие для первого счётчика
@@ -151,7 +150,6 @@ const generator = new CreateGenerator(
   'indicator--active',
   '.indicator--3',
   '.button--1',
-  main.mainQueue,  
   CONSTS
 );
 
@@ -161,7 +159,6 @@ const getter = new CreateGetter(
   'indicator--active',
   '.indicator--3',
   '.button--2',
-  main.mainQueue,
   CONSTS
 );
 
